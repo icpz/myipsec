@@ -9,6 +9,45 @@
 #include <ev.h>
 #include "util.h"
 #include "nfq.h"
+#include "conf.h"
+
+void main_loop();
+
+int main(int argc, char **argv) {
+    google::InitGoogleLogging(argv[0]);
+    std::string configFile;
+    int c;
+
+    while ((c = getopt(argc, argv, "c:")) != -1) {
+        switch(c) {
+            case 'c':
+                configFile = optarg;
+                break;
+
+            case '?':
+                LOG(WARNING) << "unknown option: " << (char)optopt;
+                break;
+
+            default:
+                break;
+        }
+    }
+    if (configFile.empty()) {
+        LOG(ERROR) << "no config file!";
+        return -1;
+    }
+
+    LOG(INFO) << "get configure file: " << configFile;
+
+    std::vector<ConfItem> ci;
+    CHECK(parseConfigFile(configFile, ci)) << "syntax error in config file";
+    for (auto &c : ci) {
+        LOG(INFO) << std::hex << c.ip() << c.method() << std::endl;
+    }
+
+    // main_loop();
+    return 0;
+}
 
 static void processPacketData(uint8_t *data, int size) {
     struct pkt_buff *pkt;
@@ -113,13 +152,11 @@ static void interrupt_cb(EV_P_ ev_signal *w, int revents) {
     ev_break(EV_A);
 }
 
-int main(int argc, char **argv)
-{
+
+void main_loop() {
     struct ev_loop *loop = ev_loop_new();
     queue_io queue_watcher;
     struct ev_signal intrpt;
-
-    google::InitGoogleLogging(argv[0]);
 
     ev_signal_init(&intrpt, interrupt_cb, SIGINT);
     ev_signal_start(EV_A_ &intrpt);
@@ -160,7 +197,5 @@ int main(int argc, char **argv)
     ev_run(EV_A_ 0);
 
     ev_loop_destroy(EV_A);
-
-    return 0;
 }
 
