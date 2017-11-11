@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iterator>
 #include <algorithm>
+#include <cctype>
 #include <arpa/inet.h>
 
 ConfItem::ConfItem() {
@@ -91,7 +92,12 @@ bool parseConfigFile(const std::string &filename, std::vector<ConfItem> &items) 
                     << "base64 decode error! " << sps[3];
                 item._key.resize(osize);
             }
-            item._method = std::move(sps[5]);
+            std::transform(std::begin(sps[5]),
+                           std::end(sps[5]),
+                           std::back_inserter(item._method),
+                           [](uint8_t c) {
+                return std::toupper(c);
+            });
         }
     }
     return true;
