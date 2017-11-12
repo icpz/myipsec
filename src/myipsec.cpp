@@ -109,7 +109,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         transer = filter->find(key);
         break;
 
-    case NF_IP_LOCAL_IN:
+    case NF_IP_PRE_ROUTING:
         crypt = false;
         key.d.ip = ip->saddr;
         VLOG(2) << "got an incoming packet, key: " << std::hex << key.key;
@@ -149,10 +149,10 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     if (newBodyLen <= 0) {
         result = qh->set_verdict(id, verdict, 0, nullptr);
     } else {
+        int newPktLen = static_cast<int>(pktb_len(pkt)) + deltLen;
         VLOG(2) << "verdict packet old len: " << pktb_len(pkt)
-                << ", delta len: " << deltLen;
-        result = qh->set_verdict(id, verdict,
-                            static_cast<int>(pktb_len(pkt)) + deltLen, pktb_data(pkt));
+                << ", new len: " << newPktLen << ", delta: " << deltLen;
+        result = qh->set_verdict(id, verdict, newPktLen, pktb_data(pkt));
     }
     pktb_free(pkt);
 
