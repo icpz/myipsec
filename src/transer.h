@@ -42,6 +42,11 @@ public:
     bool valid() const { return _valid; }
 
 private:
+    ssize_t __encrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id);
+    ssize_t __decrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id);
+    void __get_session_key(const void *tm, size_t len);
+    void __get_session_iv(const void *tm, size_t len, uintptr_t id);
+
     bool _valid;
     mbedtls_cipher_context_t _cipher;
     uint8_t _iv[16];

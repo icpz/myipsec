@@ -69,6 +69,8 @@ static void processPacketData(uint8_t *data, int size) {
 
 static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa) {
     static auto filter = PacketFilter::getInstance();
+    const size_t extraLen = MY_TAG_SIZE + sizeof(struct timespec);
+
 	u_int32_t id;
     struct nfqnl_msg_packet_hdr *ph;
     uint8_t *data;
@@ -79,7 +81,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
 	ph = nfq_get_msg_packet_hdr(nfa);
 	id = ntohl(ph->packet_id);
     datalen = nfq_get_payload(nfa, &data);
-    pkt = pktb_alloc(AF_INET, data, datalen, 16 + 8);
+    pkt = pktb_alloc(AF_INET, data, datalen, extraLen);
     PCHECK(pkt != nullptr) << "pktb_alloc failed";
     ip = nfq_ip_get_hdr(pkt);
     uint16_t iphdrLen = 4 * ip->ihl;
@@ -127,7 +129,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         verdict = (transer->accept() ? NF_ACCEPT : NF_DROP); 
         ssize_t bodyLen = ip->tot_len - iphdrLen;
         newBodyLen = transer->transform(crypt, pktb_network_header(pkt) + iphdrLen,
-                           bodyLen, bodyLen + 16 + 8,
+                           bodyLen, bodyLen + extraLen,
                            reinterpret_cast<void *>(ip->id));
         if (newBodyLen > 0) {
             ip->tot_len += newBodyLen - bodyLen;
@@ -136,7 +138,8 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
             VLOG(1) << "old len: " << bodyLen << ", new len: " << newBodyLen;
         } else {
             ip->tot_len = htons(ip->tot_len);
-            LOG(WARNING) << "transer failed, will skip this packet";
+            LOG(WARNING) << "transer failed, will drop this packet";
+            verdict = NF_DROP;
         }
     }
 

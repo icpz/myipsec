@@ -13,5 +13,7 @@ extern "C" {
 #include <libnetfilter_queue/libnetfilter_queue_ipv4.h>
 }
 
+#define MY_TAG_SIZE 16
+
 #endif
 
