@@ -120,6 +120,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         LOG(WARNING) << "unexpected hook: " << ph->hook;
         break;
     }
+    ssize_t deltLen = 0;
     if (!transer) {
         VLOG(1) << "not match, skip this packet";
         verdict = NF_ACCEPT;
@@ -132,7 +133,8 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
                            bodyLen, bodyLen + extraLen,
                            reinterpret_cast<void *>(ip->id));
         if (newBodyLen > 0) {
-            ip->tot_len += newBodyLen - bodyLen;
+            deltLen = newBodyLen - bodyLen;
+            ip->tot_len += deltLen;
             ip->tot_len = htons(ip->tot_len);
             nfq_ip_set_checksum(ip);
             VLOG(1) << "old len: " << bodyLen << ", new len: " << newBodyLen;
@@ -147,8 +149,10 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     if (newBodyLen <= 0) {
         result = qh->set_verdict(id, verdict, 0, nullptr);
     } else {
+        VLOG(2) << "verdict packet old len: " << pktb_len(pkt)
+                << ", delta len: " << deltLen;
         result = qh->set_verdict(id, verdict,
-                            pktb_len(pkt), pktb_data(pkt));
+                            static_cast<int>(pktb_len(pkt)) + deltLen, pktb_data(pkt));
     }
     pktb_free(pkt);
 
