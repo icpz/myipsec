@@ -51,6 +51,14 @@ bool PacketFilter::add(const ConfItem &c) {
         break;
     }
     _filters[key.key].reset(p);
+    if (key.d.proto == static_cast<uint8_t>(ConfItem::protocol::ALL)) {
+        key_type tmpKey;
+        tmpKey.key = key.key;
+        for (uint8_t p = 0; p < static_cast<uint8_t>(c.proto()); ++p) {
+            tmpKey.d.proto = p;
+            _filters[tmpKey.key] = _filters[key.key];
+        }
+    }
 
     return result;
 }

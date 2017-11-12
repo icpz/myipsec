@@ -14,7 +14,7 @@ public:
     virtual ~Transer() { }
 
     virtual bool accept() const = 0;
-    virtual bool transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) = 0;
+    virtual ssize_t transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) = 0;
     virtual bool valid() const = 0;
 
 private:
@@ -26,7 +26,7 @@ public:
     ~Droper() { }
     
     bool accept() const { return false; }
-    bool transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) { return false; }
+    ssize_t transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) { return len; }
     bool valid() const { return true; }
 
 private:
@@ -38,7 +38,7 @@ public:
     ~Crypto();
 
     bool accept() const { return true; }
-    bool transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra);
+    ssize_t transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra);
     bool valid() const { return _valid; }
 
 private:

@@ -8,9 +8,9 @@
 class ConfItem {
 public:
     enum class protocol : uint8_t {
-        ALL,
         TCP,
-        UDP
+        UDP,
+        ALL
     };
 
     enum class action : uint8_t {

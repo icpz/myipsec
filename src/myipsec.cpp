@@ -3,15 +3,17 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
-#include <netinet/in.h>
+#include <netinet/ip.h>
 
 #include <glog/logging.h>
 #include <ev.h>
 #include "util.h"
 #include "nfq.h"
 #include "conf.h"
+#include "filter.h"
 
-void main_loop();
+void mainLoop();
+void initFilter(const std::string &file);
 
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
@@ -37,16 +39,21 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    LOG(INFO) << "get configure file: " << configFile;
+    LOG(INFO) << "get config filename: " << configFile;
+    initFilter(configFile);
 
-    std::vector<ConfItem> ci;
-    CHECK(parseConfigFile(configFile, ci)) << "syntax error in config file";
-    for (auto &c : ci) {
-        LOG(INFO) << std::hex << c.ip() << c.method() << std::endl;
-    }
-
-    // main_loop();
+    mainLoop();
     return 0;
+}
+
+void initFilter(const std::string &file) {
+    std::vector<ConfItem> ci;
+    auto filter = PacketFilter::getInstance();
+    CHECK(parseConfigFile(file, ci)) << "syntax error in config file";
+    for (auto &c : ci) {
+        LOG(INFO) << "got config: " << std::hex << c.ip() << c.method() << std::endl;
+        CHECK(filter->add(c)) << "add filter failed";
+    }
 }
 
 static void processPacketData(uint8_t *data, int size) {
@@ -60,74 +67,84 @@ static void processPacketData(uint8_t *data, int size) {
     fputs(buf, stdout);
 }
 
-static u_int32_t print_pkt (struct nfq_data *tb)
-{
-	int id = 0;
-	struct nfqnl_msg_packet_hdr *ph;
-	struct nfqnl_msg_packet_hw *hwph;
-	u_int32_t mark,ifi; 
-	int ret;
-	char *data;
-
-	ph = nfq_get_msg_packet_hdr(tb);
-	if (ph) {
-		id = ntohl(ph->packet_id);
-		printf("hw_protocol=0x%04x hook=%u id=%u ",
-			ntohs(ph->hw_protocol), ph->hook, id);
-        if (ph->hook == NF_IP_LOCAL_OUT) {
-            printf("this is a outgoing packet\n");
-        }
-	}
-
-	hwph = nfq_get_packet_hw(tb);
-	if (hwph) {
-		int i, hlen = ntohs(hwph->hw_addrlen);
-
-		printf("hw_src_addr=");
-		for (i = 0; i < hlen-1; i++)
-			printf("%02x:", hwph->hw_addr[i]);
-		printf("%02x ", hwph->hw_addr[hlen-1]);
-	} else {
-        printf("error: cannot get hw\n");
-    }
-
-	mark = nfq_get_nfmark(tb);
-	if (mark)
-		printf("mark=%u ", mark);
-
-	ifi = nfq_get_indev(tb);
-	if (ifi)
-		printf("indev=%u ", ifi);
-
-	ifi = nfq_get_outdev(tb);
-	if (ifi)
-		printf("outdev=%u ", ifi);
-	ifi = nfq_get_physindev(tb);
-	if (ifi)
-		printf("physindev=%u ", ifi);
-
-	ifi = nfq_get_physoutdev(tb);
-	if (ifi)
-		printf("physoutdev=%u ", ifi);
-
-	ret = nfq_get_payload(tb, (unsigned char **)&data);
-	if (ret >= 0) {
-		printf("payload_len=%d ", ret);
-		processPacketData ((uint8_t *)data, ret);
-	}
-	fputc('\n', stdout);
-	fputc('\n', stdout);
-
-	return id;
-}
-
 static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa) {
-	u_int32_t id = print_pkt(nfa);
-
+    static auto filter = PacketFilter::getInstance();
+	u_int32_t id;
     struct nfqnl_msg_packet_hdr *ph;
+    uint8_t *data;
+    int datalen;
+    struct pkt_buff *pkt;
+    struct iphdr *ip;
+
 	ph = nfq_get_msg_packet_hdr(nfa);
 	id = ntohl(ph->packet_id);
-    return qh->set_verdict(id, NF_ACCEPT, 0, nullptr);
+    datalen = nfq_get_payload(nfa, &data);
+    pkt = pktb_alloc(AF_INET, data, datalen, 16 + 8);
+    PCHECK(pkt != nullptr) << "pktb_alloc failed";
+    ip = nfq_ip_get_hdr(pkt);
+    uint16_t iphdrLen = 4 * ip->ihl;
+    ssize_t newBodyLen;
+    
+    uint32_t verdict = NF_ACCEPT;
+    PacketFilter::key_type key;
+    if (ip->protocol == 6) {
+        key.d.proto = static_cast<uint32_t>(ConfItem::protocol::TCP);
+    } else if (ip->protocol == 17) {
+        key.d.proto = static_cast<uint32_t>(ConfItem::protocol::UDP);
+    } else {
+        key.d.proto = static_cast<uint32_t>(ConfItem::protocol::ALL);
+    }
+
+    bool crypt;
+    PacketFilter::transer_type transer;
+    switch(ph->hook) {
+    case NF_IP_LOCAL_OUT:
+        VLOG(2) << "got an outgoing packet";
+        crypt = true;
+        key.d.ip = ip->daddr;
+        transer = filter->find(key);
+        break;
+
+    case NF_IP_LOCAL_IN:
+        VLOG(2) << "got an incoming packet";
+        crypt = false;
+        key.d.ip = ip->saddr;
+        transer = filter->find(key);
+        break;
+
+    default:
+        LOG(WARNING) << "unexpected hook: " << ph->hook;
+        break;
+    }
+    if (!transer) {
+        VLOG(1) << "not match, skip this packet";
+        verdict = NF_ACCEPT;
+    } else {
+        VLOG(1) << "transforming the packet, crypt: " << crypt;
+        verdict = (transer->accept() ? NF_ACCEPT : NF_DROP); 
+        ssize_t bodyLen = ip->tot_len - iphdrLen;
+        newBodyLen = transer->transform(crypt, pktb_network_header(pkt) + iphdrLen,
+                           bodyLen, bodyLen + 16 + 8,
+                           reinterpret_cast<void *>(ip->id));
+        if (newBodyLen > 0) {
+            ip->tot_len += newBodyLen - bodyLen;
+            nfq_ip_set_checksum(ip);
+            VLOG(1) << "old len: " << bodyLen << ", new len: " << newBodyLen;
+        } else {
+            LOG(WARNING) << "transer failed, will skip this packet";
+        }
+    }
+
+    int result;
+    if (newBodyLen <= 0) {
+        result = qh->set_verdict(id, verdict, 0, nullptr);
+    } else {
+        result = qh->set_verdict(id, verdict,
+                            pktb_len(pkt), pktb_data(pkt));
+    }
+    pktb_free(pkt);
+
+    return result;
 }
 
 static void pkt_arrived_cb(EV_P_ ev_io *wc, int revents) {
@@ -153,7 +170,7 @@ static void interrupt_cb(EV_P_ ev_signal *w, int revents) {
 }
 
 
-void main_loop() {
+void mainLoop() {
     struct ev_loop *loop = ev_loop_new();
     queue_io queue_watcher;
     struct ev_signal intrpt;
@@ -169,16 +186,10 @@ void main_loop() {
 	}
 
 	LOG(INFO) << "unbinding existing nf_queue handler for AF_INET (if any)";
-	if (nfq_unbind_pf(h->native_handle(), AF_INET) < 0) {
-		LOG(ERROR) << "error during nfq_unbind_pf()";
-		exit(1);
-	}
+    PCHECK(nfq_unbind_pf(h->native_handle(), AF_INET) >= 0) << "error during nfq_unbind_pf()";
 
 	LOG(INFO) << "binding nfnetlink_queue as nf_queue handler for AF_INET";
-	if (nfq_bind_pf(h->native_handle(), AF_INET) < 0) {
-		LOG(ERROR) << "error during nfq_bind_pf()";
-		exit(1);
-	}
+	PCHECK(nfq_bind_pf(h->native_handle(), AF_INET) >= 0) << "error during nfq_bind_pf()";
 
 	LOG(INFO) << "binding this socket to queue '0'";
     auto qh = h->create_queue(queue_cb);
