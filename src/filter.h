@@ -11,7 +11,7 @@ class PacketFilter {
 public:
     using transer_type = std::shared_ptr<Transer>;
     using key_type = union {
-        uint64_t key;
+        uint64_t key = 0;
         struct {
             uint32_t ip;
             uint8_t proto;

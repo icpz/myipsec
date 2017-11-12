@@ -24,7 +24,7 @@ static void __split(const std::string &str, std::vector<std::string> &elems) {
 }
 
 static bool __fill_proto(const std::string &str, ConfItem::protocol &dst) {
-    static std::string dict[] = { "all", "tcp", "udp" };
+    static std::string dict[] = { "tcp", "udp", "all" };
     auto itr = std::find(std::begin(dict), std::end(dict), str);
     if (itr == std::end(dict)) return false;
     dst = static_cast<ConfItem::protocol>(itr - std::begin(dict));

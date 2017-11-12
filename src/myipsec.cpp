@@ -51,7 +51,7 @@ void initFilter(const std::string &file) {
     auto filter = PacketFilter::getInstance();
     CHECK(parseConfigFile(file, ci)) << "syntax error in config file";
     for (auto &c : ci) {
-        LOG(INFO) << "got config: " << std::hex << c.ip() << c.method() << std::endl;
+        LOG(INFO) << "got config: " << std::hex << c.ip() << " " << c.method() << std::endl;
         CHECK(filter->add(c)) << "add filter failed";
     }
 }
@@ -84,6 +84,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     ip = nfq_ip_get_hdr(pkt);
     uint16_t iphdrLen = 4 * ip->ihl;
     ssize_t newBodyLen;
+    VLOG(2) << std::hex << ip->saddr << " -> " << ip->daddr;
     
     uint32_t verdict = NF_ACCEPT;
     PacketFilter::key_type key;
@@ -99,16 +100,16 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     PacketFilter::transer_type transer;
     switch(ph->hook) {
     case NF_IP_LOCAL_OUT:
-        VLOG(2) << "got an outgoing packet";
         crypt = true;
         key.d.ip = ip->daddr;
+        VLOG(2) << "got an outgoing packet, key: " << std::hex << key.key;
         transer = filter->find(key);
         break;
 
     case NF_IP_LOCAL_IN:
-        VLOG(2) << "got an incoming packet";
         crypt = false;
         key.d.ip = ip->saddr;
+        VLOG(2) << "got an incoming packet, key: " << std::hex << key.key;
         transer = filter->find(key);
         break;
 
