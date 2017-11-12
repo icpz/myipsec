@@ -83,6 +83,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     PCHECK(pkt != nullptr) << "pktb_alloc failed";
     ip = nfq_ip_get_hdr(pkt);
     uint16_t iphdrLen = 4 * ip->ihl;
+
     ssize_t newBodyLen;
     VLOG(2) << std::hex << ip->saddr << " -> " << ip->daddr;
     
@@ -122,6 +123,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         verdict = NF_ACCEPT;
     } else {
         VLOG(1) << "transforming the packet, crypt: " << crypt;
+        ip->tot_len = ntohs(ip->tot_len);
         verdict = (transer->accept() ? NF_ACCEPT : NF_DROP); 
         ssize_t bodyLen = ip->tot_len - iphdrLen;
         newBodyLen = transer->transform(crypt, pktb_network_header(pkt) + iphdrLen,
@@ -129,9 +131,11 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
                            reinterpret_cast<void *>(ip->id));
         if (newBodyLen > 0) {
             ip->tot_len += newBodyLen - bodyLen;
+            ip->tot_len = htons(ip->tot_len);
             nfq_ip_set_checksum(ip);
             VLOG(1) << "old len: " << bodyLen << ", new len: " << newBodyLen;
         } else {
+            ip->tot_len = htons(ip->tot_len);
             LOG(WARNING) << "transer failed, will skip this packet";
         }
     }
