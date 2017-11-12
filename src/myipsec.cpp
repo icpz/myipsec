@@ -20,6 +20,11 @@ int main(int argc, char **argv) {
     std::string configFile;
     int c;
 
+    if (getuid() != 0) {
+        LOG(ERROR) << "This program must run as root.";
+        return -1;
+    }
+
     while ((c = getopt(argc, argv, "c:")) != -1) {
         switch(c) {
             case 'c':
