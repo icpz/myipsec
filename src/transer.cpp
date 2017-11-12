@@ -16,7 +16,10 @@ Crypto::Crypto(std::vector<uint8_t> &&key, const std::string &method)
     _valid = true;
 }
 
-ssize_t Crypto::Transer::transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) {
+Crypto::~Crypto() {
+}
+
+ssize_t Crypto::transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) {
     LOG(INFO) << (action ? "encrypting..." : "decrypting...");
     return len;
 }

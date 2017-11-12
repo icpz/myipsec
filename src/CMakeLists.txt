@@ -19,6 +19,8 @@ list(APPEND SOURCES
     nfq.cpp
     nfqueue.cpp
     conf.cpp
+    transer.cpp
+    filter.cpp
     )
 
 # add the executable
