@@ -28,6 +28,7 @@ ssize_t Crypto::transform(uint8_t action, uint8_t *data, size_t len, size_t bufl
     uintptr_t ipId = reinterpret_cast<uintptr_t>(extra);
     ssize_t result;
 
+    mbedtls_cipher_reset(&_cipher);
     if (action) {
         result = __encrypt(data, len, buflen, ipId);
     } else {
