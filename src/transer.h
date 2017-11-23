@@ -45,8 +45,8 @@ public:
     size_t padlen() const;
 
 private:
-    ssize_t __encrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id);
-    ssize_t __decrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id);
+    ssize_t __encrypt(uint8_t *data, size_t len, size_t buflen);
+    ssize_t __decrypt(uint8_t *data, size_t len, size_t buflen);
     void __get_session_key();
     void __generate_salt();
 

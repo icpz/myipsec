@@ -32,20 +32,19 @@ static const size_t kTagSize = MY_TAG_SIZE;
 
 ssize_t Crypto::transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) {
     LOG(INFO) << (action ? "encrypting..." : "decrypting...");
-    uintptr_t ipId = reinterpret_cast<uintptr_t>(extra);
     ssize_t result;
 
     mbedtls_cipher_reset(&_cipher);
     if (action) {
-        result = __encrypt(data, len, buflen, ipId);
+        result = __encrypt(data, len, buflen);
     } else {
-        result = __decrypt(data, len, buflen, ipId);
+        result = __decrypt(data, len, buflen);
     }
 
     return result;
 }
 
-ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id) {
+ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen) {
     ssize_t result;
 
     if (buflen < len + padlen()) {
@@ -75,7 +74,7 @@ ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id
     return result;
 }
 
-ssize_t Crypto::__decrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id) {
+ssize_t Crypto::__decrypt(uint8_t *data, size_t len, size_t buflen) {
     ssize_t result;
     size_t cLen = len - padlen();
 

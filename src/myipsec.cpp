@@ -61,17 +61,6 @@ void initFilter(const std::string &file) {
     }
 }
 
-static void processPacketData(uint8_t *data, int size) {
-    struct pkt_buff *pkt;
-    struct iphdr *ip;
-    char buf[4096];
-    pkt = pktb_alloc(AF_INET, data, size, 0);
-    ip = nfq_ip_get_hdr(pkt);
-
-    nfq_ip_snprintf(buf, sizeof buf, ip);
-    fputs(buf, stdout);
-}
-
 static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa) {
     static auto filter = PacketFilter::getInstance();
     const size_t extraLen = MY_TAG_SIZE + MBEDTLS_MD_MAX_SIZE;
@@ -141,9 +130,10 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         ip->tot_len = ntohs(ip->tot_len);
         verdict = (transer->accept() ? NF_ACCEPT : NF_DROP); 
         ssize_t bodyLen = ip->tot_len - iphdrLen;
-        newBodyLen = transer->transform(crypt, pktb_network_header(pkt) + iphdrLen,
+        newBodyLen = transer->transform(crypt,
+                           pktb_network_header(pkt) + iphdrLen,
                            bodyLen, bodyLen + extraLen,
-                           reinterpret_cast<void *>(ip->id));
+                           nullptr);
         if (newBodyLen > 0) {
             deltLen = newBodyLen - bodyLen;
             ip->tot_len += deltLen;
@@ -188,7 +178,7 @@ static void pkt_arrived_cb(EV_P_ ev_io *wc, int revents) {
 }
 
 static void interrupt_cb(EV_P_ ev_signal *w, int revents) {
-    LOG(WARNING) << "sigint received";
+    LOG(WARNING) << "SIGINT received";
     ev_signal_stop(EV_A_ w);
     ev_break(EV_A);
 }
