@@ -49,7 +49,9 @@ ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id
     ssize_t result;
 
     if (buflen < len + padlen()) {
-        LOG(ERROR) << "too small buf!";
+        LOG(ERROR) << "too small buf! "
+                   << buflen << " < "
+                   << len << " + " << padlen();
         return -1;
     }
 
@@ -78,7 +80,7 @@ ssize_t Crypto::__decrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id
     size_t cLen = len - padlen();
 
     if (len < padlen()) {
-        LOG(ERROR) << "too small buf!";
+        LOG(ERROR) << "too small buf! " << len << " - " << padlen();
         return -1;
     }
 
