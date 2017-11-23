@@ -74,7 +74,7 @@ static void processPacketData(uint8_t *data, int size) {
 
 static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa) {
     static auto filter = PacketFilter::getInstance();
-    const size_t extraLen = MY_TAG_SIZE + sizeof(struct timespec);
+    const size_t extraLen = MY_TAG_SIZE + MBEDTLS_MD_MAX_SIZE;
 
 	u_int32_t id;
     struct nfqnl_msg_packet_hdr *ph;
@@ -96,12 +96,18 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     
     uint32_t verdict = NF_ACCEPT;
     PacketFilter::key_type key;
-    if (ip->protocol == 6) {
+    switch (ip->protocol) {
+    case 6:
         key.d.proto = static_cast<uint32_t>(ConfItem::protocol::TCP);
-    } else if (ip->protocol == 17) {
+        break;
+
+    case 17:
         key.d.proto = static_cast<uint32_t>(ConfItem::protocol::UDP);
-    } else {
+        break;
+
+    default:
         key.d.proto = static_cast<uint32_t>(ConfItem::protocol::ALL);
+        break;
     }
 
     bool crypt;
@@ -125,6 +131,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         LOG(WARNING) << "unexpected hook: " << ph->hook;
         break;
     }
+
     ssize_t deltLen = 0;
     if (!transer) {
         VLOG(1) << "not match, skip this packet";

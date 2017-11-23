@@ -16,6 +16,7 @@ public:
     virtual bool accept() const = 0;
     virtual ssize_t transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) = 0;
     virtual bool valid() const = 0;
+    virtual size_t padlen() const = 0;
 
 private:
 };
@@ -28,6 +29,7 @@ public:
     bool accept() const { return false; }
     ssize_t transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) { return len; }
     bool valid() const { return true; }
+    size_t padlen() const { return 0; }
 
 private:
 };
@@ -40,20 +42,21 @@ public:
     bool accept() const { return true; }
     ssize_t transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra);
     bool valid() const { return _valid; }
+    size_t padlen() const;
 
 private:
     ssize_t __encrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id);
     ssize_t __decrypt(uint8_t *data, size_t len, size_t buflen, uintptr_t id);
-    void __get_session_key(const void *tm, size_t len);
-    void __get_session_iv(const void *tm, size_t len, uintptr_t id);
+    void __get_session_key();
+    void __generate_salt();
 
     bool _valid;
     mbedtls_cipher_context_t _cipher;
-    uint8_t _iv[16];
-    uint8_t _skey[16];
-    std::vector<uint8_t> _pkey;
+    std::vector<uint8_t> _nonce;
+    std::vector<uint8_t> _skey;  // session key
+    const std::vector<uint8_t> _pkey;  // pre-shared key
 
-    mbedtls_md_context_t _md;
+    std::vector<uint8_t> _salt;
 };
 
 #endif
