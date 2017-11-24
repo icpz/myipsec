@@ -15,11 +15,13 @@ public:
     explicit ConfEditor(QWidget *parent = 0);
     ~ConfEditor();
 
+signals:
+    void fileChange();
+    void saved(QString config);
+
 private:
     void onAddButtonClicked();
-    void newConfFile();
-    void openConfFile();
-    void saveToConfFile();
+    void onSaveButtonClicked();
 
     void initSignals();
     bool checkInput();

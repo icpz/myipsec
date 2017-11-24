@@ -1,10 +1,10 @@
-#include "confeditor.h"
+#include "myipsec.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    ConfEditor w;
+    MyIpsec w;
     w.show();
 
     return a.exec();

@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = ConfEditor
+TARGET = MyIpsec
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -25,10 +25,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        confeditor.cpp
+        confeditor.cpp \
+    myipsec.cpp
 
 HEADERS += \
-        confeditor.h
+        confeditor.h \
+    myipsec.h
 
 FORMS += \
-        confeditor.ui
+        confeditor.ui \
+    myipsec.ui

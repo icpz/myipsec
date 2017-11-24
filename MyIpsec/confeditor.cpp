@@ -12,9 +12,9 @@ ConfEditor::ConfEditor(QWidget *parent) :
     ui(new Ui::ConfEditor)
 {
     ui->setupUi(this);
-    delete ui->mainToolBar;
 
     this->setFixedSize(this->size());
+    ui->saveButton->setEnabled(false);
     fileChanged = false;
     initSignals();
 }
@@ -39,63 +39,26 @@ void ConfEditor::onAddButtonClicked() {
         oss << ui->methodCombo->currentText();
     }
     ui->confTextEdit->appendPlainText(line);
-    fileChanged = true;
+    emit fileChange();
 }
 
-void ConfEditor::newConfFile() {
-    if (fileChanged) {
-        auto reply = QMessageBox::question(this, tr("New File"), tr("You've made changes, press OK to save"),
-                              QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Ok);
-        if (reply == QMessageBox::Ok) {
-            saveToConfFile();
-        }
-    }
-    ui->confTextEdit->clear();
-    fileChanged = false;
-}
-
-void ConfEditor::openConfFile() {
-    if (fileChanged) {
-        auto reply = QMessageBox::question(this, tr("New File"), tr("You've made changes, press OK to save"),
-                              QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Ok);
-        if (reply == QMessageBox::Ok) {
-            saveToConfFile();
-        }
-    }
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"));
-    QFile file(filePath);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        qDebug() << "Open file failed";
-        return;
-    }
-    QTextStream iss(&file);
-    ui->confTextEdit->setPlainText(iss.readAll());
-    fileChanged = false;
-}
-
-void ConfEditor::saveToConfFile() {
-    QString filePath = QFileDialog::getSaveFileName(this, tr("Save File"));
-    QFile file(filePath);
-    file.open(QFile::WriteOnly | QFile::Text);
-    if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        qDebug() << "Open file failed";
-        return;
-    }
-    QTextStream oss(&file);
-    oss << ui->confTextEdit->toPlainText();
-    fileChanged = false;
+void ConfEditor::onSaveButtonClicked() {
+    emit saved(ui->confTextEdit->toPlainText());
+    close();
 }
 
 void ConfEditor::initSignals() {
     connect(ui->addButton, &QPushButton::clicked, this, &ConfEditor::onAddButtonClicked);
-    connect(ui->actionNew, &QAction::triggered, this, &ConfEditor::newConfFile);
-    connect(ui->actionOpen, &QAction::triggered, this, &ConfEditor::openConfFile);
-    connect(ui->actionSaveTo, &QAction::triggered, this, &ConfEditor::saveToConfFile);
+    connect(ui->saveButton, &QPushButton::clicked, this, &ConfEditor::onSaveButtonClicked);
     connect(ui->confTextEdit, &QPlainTextEdit::textChanged, [this]() {
-        fileChanged = true;
+        emit fileChange();
     });
     connect(ui->actionCombo, &QComboBox::currentTextChanged, [this](const QString &text) {
         ui->cryptGroup->setVisible(text == tr("crypt"));
+    });
+    connect(this, &ConfEditor::fileChange, [this]() {
+        fileChanged = true;
+        ui->saveButton->setEnabled(true);
     });
 }
 
