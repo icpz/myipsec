@@ -27,3 +27,7 @@ list(APPEND SOURCES
 add_executable(myipsec ${SOURCES})
 target_link_libraries(myipsec ${DEPS})
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iptables_setup.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/iptables_setup.sh
+               COPYONLY)
+
