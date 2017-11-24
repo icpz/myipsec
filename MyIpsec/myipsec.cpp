@@ -17,7 +17,7 @@ MyIpsec::MyIpsec(QWidget *parent) :
     ui->logButton->setEnabled(false);
 
     initSignals();
-    process.setProgram("./myipsec");
+    process.setProgram("bin/myipsec");
 }
 
 MyIpsec::~MyIpsec()
@@ -36,7 +36,7 @@ void MyIpsec::initSignals() {
     });
     connect(&process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
     [this](int code, QProcess::ExitStatus status) {
-        QProcess::execute("./iptables_setup.sh reset");
+        QProcess::execute("bin/iptables_setup.sh reset");
         started = false;
         ui->startButton->setText(tr("Start"));
         ui->statusLabel->setText(tr("OFF"));
@@ -132,7 +132,7 @@ bool MyIpsec::startFirewall() {
     env.insert("GLOG_v", "2");
     process.setProcessEnvironment(env);
 
-    QProcess::execute("./iptables_setup.sh setup");
+    QProcess::execute("bin/iptables_setup.sh setup");
     process.start();
 
     return true;
@@ -145,6 +145,6 @@ bool MyIpsec::stopFirewall() {
         qDebug() << "exit timeout, killing";
         process.kill();
     }
-    QProcess::execute("./iptables_setup.sh reset");
+    QProcess::execute("bin/iptables_setup.sh reset");
     return true;
 }
