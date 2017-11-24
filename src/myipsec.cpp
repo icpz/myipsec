@@ -178,7 +178,7 @@ static void pkt_arrived_cb(EV_P_ ev_io *wc, int revents) {
 }
 
 static void interrupt_cb(EV_P_ ev_signal *w, int revents) {
-    LOG(WARNING) << "SIGINT received";
+    LOG(WARNING) << "SIGNAL received";
     ev_signal_stop(EV_A_ w);
     ev_break(EV_A);
 }
@@ -187,10 +187,13 @@ static void interrupt_cb(EV_P_ ev_signal *w, int revents) {
 void mainLoop() {
     struct ev_loop *loop = ev_loop_new();
     queue_io queue_watcher;
-    struct ev_signal intrpt;
+    struct ev_signal int_watcher;
+    struct ev_signal term_watcher;
 
-    ev_signal_init(&intrpt, interrupt_cb, SIGINT);
-    ev_signal_start(EV_A_ &intrpt);
+    ev_signal_init(&int_watcher, interrupt_cb, SIGINT);
+    ev_signal_start(EV_A_ &int_watcher);
+    ev_signal_init(&term_watcher, interrupt_cb, SIGTERM);
+    ev_signal_start(EV_A_ &term_watcher);
 
     LOG(INFO) << "Opening handle.";
     auto h = std::make_shared<NFQ>();

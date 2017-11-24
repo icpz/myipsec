@@ -15,8 +15,10 @@ public:
     explicit ConfEditor(QWidget *parent = 0);
     ~ConfEditor();
 
+    void load(QString config);
+
 signals:
-    void fileChange();
+    void configChanged();
     void saved(QString config);
 
 private:

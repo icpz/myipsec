@@ -32,6 +32,9 @@
       <height>421</height>
      </rect>
     </property>
+    <property name="lineWrapMode">
+     <enum>QPlainTextEdit::NoWrap</enum>
+    </property>
    </widget>
    <widget class="QLineEdit" name="ipEdit">
     <property name="geometry">

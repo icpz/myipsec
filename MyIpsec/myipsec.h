@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <confeditor.h>
 #include <memory>
+#include <QTemporaryDir>
+#include <QProcess>
 
 namespace Ui {
 class MyIpsec;
@@ -18,9 +20,7 @@ public:
     ~MyIpsec();
 
 signals:
-    void startAction();
-    void stopAction();
-    void alert(QString msg);
+    void alert(QString msg, bool append = false);
 
 private slots:
     void on_configButton_clicked();
@@ -31,10 +31,14 @@ private slots:
 
 private:
     void initSignals();
+    bool startFirewall();
+    bool stopFirewall();
 
     Ui::MyIpsec *ui;
     std::unique_ptr<ConfEditor> editor;
     bool started;
+    QTemporaryDir workDir;
+    QProcess process;
 };
 
 #endif // MYIPSEC_H

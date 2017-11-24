@@ -24,6 +24,10 @@ ConfEditor::~ConfEditor()
     delete ui;
 }
 
+void ConfEditor::load(QString config) {
+    ui->confTextEdit->setPlainText(config);
+}
+
 void ConfEditor::onAddButtonClicked() {
     if (!checkInput()) return;
     QString line;
@@ -39,7 +43,7 @@ void ConfEditor::onAddButtonClicked() {
         oss << ui->methodCombo->currentText();
     }
     ui->confTextEdit->appendPlainText(line);
-    emit fileChange();
+    emit configChanged();
 }
 
 void ConfEditor::onSaveButtonClicked() {
@@ -51,12 +55,13 @@ void ConfEditor::initSignals() {
     connect(ui->addButton, &QPushButton::clicked, this, &ConfEditor::onAddButtonClicked);
     connect(ui->saveButton, &QPushButton::clicked, this, &ConfEditor::onSaveButtonClicked);
     connect(ui->confTextEdit, &QPlainTextEdit::textChanged, [this]() {
-        emit fileChange();
+        if (isHidden()) return;
+        emit configChanged();
     });
     connect(ui->actionCombo, &QComboBox::currentTextChanged, [this](const QString &text) {
         ui->cryptGroup->setVisible(text == tr("crypt"));
     });
-    connect(this, &ConfEditor::fileChange, [this]() {
+    connect(this, &ConfEditor::configChanged, [this]() {
         fileChanged = true;
         ui->saveButton->setEnabled(true);
     });
