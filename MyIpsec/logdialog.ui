@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QTextBrowser" name="textBrowser">
+  <widget class="QTextBrowser" name="logView">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -26,7 +26,7 @@
     <enum>QTextEdit::NoWrap</enum>
    </property>
   </widget>
-  <widget class="QTextBrowser" name="textBrowser_2">
+  <widget class="QTextBrowser" name="alertView">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -34,6 +34,9 @@
      <width>571</width>
      <height>141</height>
     </rect>
+   </property>
+   <property name="lineWrapMode">
+    <enum>QTextEdit::NoWrap</enum>
    </property>
   </widget>
   <widget class="QLabel" name="label">

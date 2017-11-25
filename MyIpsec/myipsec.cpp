@@ -36,6 +36,7 @@ MyIpsec::~MyIpsec()
 void MyIpsec::initSignals() {
     connect(editor.get(), &ConfEditor::saved, this, &MyIpsec::onConfigChanged);
     connect(this, &MyIpsec::alert, [this](QString msg, bool append) {
+        logView->addAlert(msg);
         if (append) {
             msg = QString("%1, %2").arg(ui->alertLabel->text(), msg);
         }
@@ -49,6 +50,7 @@ void MyIpsec::initSignals() {
         ui->statusLabel->setText(tr("OFF"));
         ui->restartButton->setEnabled(false);
         ui->logButton->setEnabled(false);
+        logView->close();
         if (status == QProcess::CrashExit) {
             emit alert(tr("myipsec crashed! Please do check"));
             return;
@@ -76,6 +78,7 @@ void MyIpsec::on_startButton_clicked() {
         ui->statusLabel->setText(tr("OFF"));
         ui->restartButton->setEnabled(false);
         ui->logButton->setEnabled(false);
+        logView->close();
     } else {
         emit alert(tr("Failed to setup firewall!"), true);
     }
@@ -110,6 +113,7 @@ void MyIpsec::on_configButton_clicked() {
 
 void MyIpsec::on_logButton_clicked() {
     qDebug() << "log button clicked";
+    logView->setupLogFile(workDir.filePath("myipsec.INFO"));
     logView->show();
 }
 
