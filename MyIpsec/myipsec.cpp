@@ -2,6 +2,19 @@
 #include "ui_myipsec.h"
 #include <QDebug>
 #include <QSettings>
+#include <QMessageBox>
+
+static QString __loadConfigText();
+size_t countLines(QString msg) {
+    QTextStream qts(&msg);
+    QString line;
+    size_t result = 0;
+    while (!qts.atEnd()) {
+        line = qts.readLine();
+        if (!line.isEmpty()) ++result;
+    }
+    return result;
+}
 
 MyIpsec::MyIpsec(QWidget *parent) :
     QMainWindow(parent),
@@ -16,6 +29,8 @@ MyIpsec::MyIpsec(QWidget *parent) :
     ui->statusLabel->setText(tr("OFF"));
     ui->restartButton->setEnabled(false);
     ui->logButton->setEnabled(false);
+    currRules = countLines(__loadConfigText());
+    ui->ruleLabel->setText(tr("%1 rule(s) configured").arg(currRules));
 
     initSignals();
     QDir pwd = QApplication::applicationFilePath();
@@ -68,6 +83,11 @@ void MyIpsec::initSignals() {
 
 void MyIpsec::on_startButton_clicked() {
     qDebug() << "start button clicked";
+    if (currRules == 0) {
+        QMessageBox::warning(this, tr("Error!"),
+                             tr("Add at least one rule before starting, please"));
+        return;
+    }
     if (process.state() == QProcess::Starting) return;
     ui->alertLabel->setText(tr(""));
     if (!started && startFirewall()) {
@@ -90,7 +110,7 @@ void MyIpsec::on_restartButton_clicked() {
     on_startButton_clicked();
 }
 
-static QString __loadConfigText() {
+QString __loadConfigText() {
     QSettings settings("IS.SJTU", "MyIpsec");
     settings.beginGroup("gui");
     QString result = settings.value("config", QVariant(QString())).value<QString>();
@@ -120,6 +140,8 @@ void MyIpsec::on_logButton_clicked() {
 void MyIpsec::onConfigChanged(QString config) {
     qDebug() << "config file changed";
     __storeConfigText(config);
+    currRules = countLines(config);
+    ui->ruleLabel->setText(tr("%1 rule(s) configured").arg(currRules));
 }
 
 bool MyIpsec::startFirewall() {

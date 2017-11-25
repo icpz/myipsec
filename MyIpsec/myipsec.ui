@@ -92,7 +92,7 @@
      <string>ON</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_3">
+   <widget class="QLabel" name="ruleLabel">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -125,7 +125,7 @@
      <x>0</x>
      <y>0</y>
      <width>331</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>

@@ -29,6 +29,5 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
 add_executable(MyIpsec ${LIB_SRC} ${LIB_hdr_moc} ${LIB_ui_moc})
-target_link_libraries (MyIpsec Qt5::Widgets)
-
+target_link_libraries(MyIpsec Qt5::Widgets)
 

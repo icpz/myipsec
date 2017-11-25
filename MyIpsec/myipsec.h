@@ -43,6 +43,7 @@ private:
     QProcess process;
     QString scriptPath;
     QString binPath;
+    size_t currRules;
 };
 
 #endif // MYIPSEC_H
