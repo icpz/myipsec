@@ -133,7 +133,7 @@ void MyIpsec::on_configButton_clicked() {
 
 void MyIpsec::on_logButton_clicked() {
     qDebug() << "log button clicked";
-    logView->setupLogFile(workDir.filePath("myipsec.INFO"));
+    logView->setupLogFile(workDir.path() + "/myipsec.INFO");
     logView->show();
 }
 
@@ -150,7 +150,7 @@ bool MyIpsec::startFirewall() {
         return false;
     }
     qDebug() << "tmp dir: " << workDir.path();
-    QString path = workDir.filePath("config.txt");
+    QString path = workDir.path() + "/config.txt";
     QFile file(path);
     file.open(QIODevice::WriteOnly | QIODevice::Text);
     QTextStream qss(&file);

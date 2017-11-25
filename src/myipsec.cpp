@@ -61,6 +61,32 @@ void initFilter(const std::string &file) {
     }
 }
 
+void fixProtocol(uint8_t &proto, bool inv) {
+    if (inv) {
+        switch (proto) {
+        case 6:
+            proto = 0 + 50;
+            break;
+        case 17:
+            proto = 1 + 50;
+            break;
+        default:
+            break;
+        }
+    } else {
+        switch (proto - 50) {
+        case 0:
+            proto = 6;
+            break;
+        case 1:
+            proto = 17;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa) {
     static auto filter = PacketFilter::getInstance();
     const size_t extraLen = MY_TAG_SIZE + MBEDTLS_MD_MAX_SIZE;
@@ -80,7 +106,6 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     ip = nfq_ip_get_hdr(pkt);
     uint16_t iphdrLen = 4 * ip->ihl;
 
-    ssize_t newBodyLen;
     VLOG(2) << std::hex << ip->saddr << " -> " << ip->daddr;
     
     uint32_t verdict = NF_ACCEPT;
@@ -122,6 +147,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     }
 
     ssize_t deltLen = 0;
+    ssize_t newBodyLen = ip->tot_len - iphdrLen;
     if (!transer) {
         VLOG(1) << "not match, skip this packet";
         verdict = NF_ACCEPT;
@@ -152,9 +178,10 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         result = qh->set_verdict(id, verdict, 0, nullptr);
     } else {
         int newPktLen = static_cast<int>(pktb_len(pkt)) + deltLen;
-        VLOG(2) << "verdict packet old len: " << pktb_len(pkt)
-                << ", new len: " << newPktLen << ", delta: " << deltLen;
         result = qh->set_verdict(id, verdict, newPktLen, pktb_data(pkt));
+        VLOG(2) << "verdict: " << verdict <<  " packet old len: " << pktb_len(pkt)
+                << ", new len: " << newPktLen << ", delta: " << deltLen
+                << ", result: " << result;
     }
     pktb_free(pkt);
 
