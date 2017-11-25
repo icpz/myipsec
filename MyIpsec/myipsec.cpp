@@ -7,6 +7,7 @@ MyIpsec::MyIpsec(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MyIpsec),
     editor(new ConfEditor(this)),
+    logView(new LogDialog(this)),
     started(false)
 {
     ui->setupUi(this);
@@ -17,13 +18,19 @@ MyIpsec::MyIpsec(QWidget *parent) :
     ui->logButton->setEnabled(false);
 
     initSignals();
-    process.setProgram("bin/myipsec");
+    QDir pwd = QApplication::applicationFilePath();
+    pwd.cdUp();
+    scriptPath = pwd.filePath("bin/iptables_setup.sh");
+    binPath = pwd.filePath("bin/myipsec");
+    process.setProgram(binPath);
+    qDebug() << pwd.path();
+    qDebug() << scriptPath;
 }
 
 MyIpsec::~MyIpsec()
 {
-    delete ui;
     if (started) stopFirewall();
+    delete ui;
 }
 
 void MyIpsec::initSignals() {
@@ -36,7 +43,7 @@ void MyIpsec::initSignals() {
     });
     connect(&process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
     [this](int code, QProcess::ExitStatus status) {
-        QProcess::execute("bin/iptables_setup.sh reset");
+        QProcess::execute(QString("%1 reset").arg(scriptPath));
         started = false;
         ui->startButton->setText(tr("Start"));
         ui->statusLabel->setText(tr("OFF"));
@@ -103,6 +110,7 @@ void MyIpsec::on_configButton_clicked() {
 
 void MyIpsec::on_logButton_clicked() {
     qDebug() << "log button clicked";
+    logView->show();
 }
 
 void MyIpsec::onConfigChanged(QString config) {
@@ -132,7 +140,7 @@ bool MyIpsec::startFirewall() {
     env.insert("GLOG_v", "2");
     process.setProcessEnvironment(env);
 
-    QProcess::execute("bin/iptables_setup.sh setup");
+    QProcess::execute(QString("%1 setup").arg(scriptPath));
     process.start();
 
     return true;
@@ -145,6 +153,6 @@ bool MyIpsec::stopFirewall() {
         qDebug() << "exit timeout, killing";
         process.kill();
     }
-    QProcess::execute("bin/iptables_setup.sh reset");
+    QProcess::execute(QString("%1 reset").arg(scriptPath));
     return true;
 }

@@ -26,12 +26,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         confeditor.cpp \
-    myipsec.cpp
+    myipsec.cpp \
+    logdialog.cpp
 
 HEADERS += \
         confeditor.h \
-    myipsec.h
+    myipsec.h \
+    logdialog.h
 
 FORMS += \
         confeditor.ui \
-    myipsec.ui
+    myipsec.ui \
+    logdialog.ui

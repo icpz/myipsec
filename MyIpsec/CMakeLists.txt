@@ -5,17 +5,20 @@ find_package(Qt5Widgets)
 
 list(APPEND LIB_SRC
         confeditor.cpp
+        logdialog.cpp
         myipsec.cpp
         main.cpp
     )
 
 list(APPEND LIB_HDR
         confeditor.h
+        logdialog.h
         myipsec.h
     )
 
 list(APPEND LIB_UI
         confeditor.ui
+        logdialog.ui
         myipsec.ui
     )
 

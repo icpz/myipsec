@@ -2,10 +2,11 @@
 #define MYIPSEC_H
 
 #include <QMainWindow>
-#include <confeditor.h>
 #include <memory>
 #include <QTemporaryDir>
 #include <QProcess>
+#include "confeditor.h"
+#include "logdialog.h"
 
 namespace Ui {
 class MyIpsec;
@@ -36,9 +37,12 @@ private:
 
     Ui::MyIpsec *ui;
     std::unique_ptr<ConfEditor> editor;
+    std::unique_ptr<LogDialog> logView;
     bool started;
     QTemporaryDir workDir;
     QProcess process;
+    QString scriptPath;
+    QString binPath;
 };
 
 #endif // MYIPSEC_H
