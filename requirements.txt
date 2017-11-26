@@ -1,0 +1,2 @@
+sudo apt install build-essentials git libev-dev libnetfilter-queue-dev cmake qt5-default pkg-config libmbedtls-dev libgoogle-glog-dev
+

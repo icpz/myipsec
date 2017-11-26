@@ -3,6 +3,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
 
 extern "C" {
 #include <linux/types.h>
