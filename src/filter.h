@@ -20,6 +20,7 @@ public:
 
     transer_type find(key_type key) const;
     bool add(const ConfItem &c);
+    bool match(key_type key, uint8_t proto) const;
 
     static std::shared_ptr<PacketFilter> getInstance();
 
@@ -27,6 +28,7 @@ private:
     PacketFilter();
 
     std::unordered_map<uint64_t, transer_type> _filters;
+    std::unordered_map<uint64_t, ConfItem::protocol> _protocols;
 };
 
 #endif

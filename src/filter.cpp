@@ -31,7 +31,7 @@ bool PacketFilter::add(const ConfItem &c) {
     key_type key;
     bool result = true;
     key.d.ip = c.ip();
-    key.d.proto = static_cast<uint8_t>(c.proto());
+    key.d.proto = 0;
 
     Transer *p = nullptr;
     switch(c.act()) {
@@ -51,17 +51,30 @@ bool PacketFilter::add(const ConfItem &c) {
         break;
     }
     _filters[key.key].reset(p);
+    _protocols[key.key] = c.proto();
     VLOG(2) << "adding key: " << std::hex << key.key;
-    if (key.d.proto == static_cast<uint8_t>(ConfItem::protocol::ALL)) {
-        key_type tmpKey;
-        tmpKey.key = key.key;
-        for (uint8_t p = 0; p < static_cast<uint8_t>(c.proto()); ++p) {
-            tmpKey.d.proto = p;
-            _filters[tmpKey.key] = _filters[key.key];
-            VLOG(2) << "adding key: " << std::hex << tmpKey.key;
-        }
-    }
 
+    return result;
+}
+
+bool PacketFilter::match(key_type key, uint8_t proto) const {
+    auto itr = _protocols.find(key.key);
+    if (itr == _protocols.end()) return false;
+    using CP = ConfItem::protocol;
+    bool result = false;
+    switch(itr->second) {
+    case CP::ALL:
+        result = true;
+        break;
+    case CP::TCP:
+        result = (proto == 6);
+        break;
+    case CP::UDP:
+        result = (proto == 17);
+        break;
+    default:
+        break;
+    }
     return result;
 }
 

@@ -101,6 +101,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
 	ph = nfq_get_msg_packet_hdr(nfa);
 	id = ntohl(ph->packet_id);
     datalen = nfq_get_payload(nfa, &data);
+    uint8_t lastByte = data[datalen - 1];
     pkt = pktb_alloc(AF_INET, data, datalen, extraLen);
     PCHECK(pkt != nullptr) << "pktb_alloc failed";
     ip = nfq_ip_get_hdr(pkt);
@@ -110,45 +111,48 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     
     uint32_t verdict = NF_ACCEPT;
     PacketFilter::key_type key;
-    switch (ip->protocol) {
-    case 6:
-        key.d.proto = static_cast<uint32_t>(ConfItem::protocol::TCP);
-        break;
+    key.d.proto = 0;
 
-    case 17:
-        key.d.proto = static_cast<uint32_t>(ConfItem::protocol::UDP);
-        break;
-
-    default:
-        key.d.proto = static_cast<uint32_t>(ConfItem::protocol::ALL);
-        break;
-    }
-
-    bool crypt;
+    bool crypt = false;
+    bool pass = true;
+    uint8_t ipProto = ip->protocol;
     PacketFilter::transer_type transer;
     switch(ph->hook) {
     case NF_IP_LOCAL_OUT:
-        crypt = true;
         key.d.ip = ip->daddr;
         VLOG(2) << "got an outgoing packet, key: " << std::hex << key.key;
         transer = filter->find(key);
+        if (!transer) pass = true;
+        else if (filter->match(key, ipProto)) {
+            VLOG(2) << "proto matched: " << ipProto;
+            pass = false;
+            crypt = true;
+            ip->protocol = 51;
+        }
         break;
 
     case NF_IP_PRE_ROUTING:
-        crypt = false;
         key.d.ip = ip->saddr;
         VLOG(2) << "got an incoming packet, key: " << std::hex << key.key;
         transer = filter->find(key);
+        if (!transer) pass = true;
+        else if (ipProto == 51 && filter->match(key, lastByte)) {
+            VLOG(2) << "proto matched: " << lastByte;
+            pass = false;
+            crypt = false;
+            ip->protocol = lastByte;
+        }
         break;
 
     default:
         LOG(WARNING) << "unexpected hook: " << ph->hook;
+        pass = true;
         break;
     }
 
     ssize_t deltLen = 0;
     ssize_t newBodyLen = ip->tot_len - iphdrLen;
-    if (!transer) {
+    if (pass) {
         VLOG(1) << "not match, skip this packet";
         verdict = NF_ACCEPT;
     } else {
@@ -159,7 +163,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         newBodyLen = transer->transform(crypt,
                            pktb_network_header(pkt) + iphdrLen,
                            bodyLen, bodyLen + extraLen,
-                           nullptr);
+                           &ipProto);
         if (newBodyLen > 0) {
             deltLen = newBodyLen - bodyLen;
             ip->tot_len += deltLen;
@@ -174,7 +178,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     }
 
     int result;
-    if (newBodyLen <= 0) {
+    if (pass || newBodyLen <= 0) {
         result = qh->set_verdict(id, verdict, 0, nullptr);
     } else {
         int newPktLen = static_cast<int>(pktb_len(pkt)) + deltLen;

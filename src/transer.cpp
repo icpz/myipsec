@@ -33,18 +33,19 @@ static const size_t kTagSize = MY_TAG_SIZE;
 ssize_t Crypto::transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) {
     LOG(INFO) << (action ? "encrypting..." : "decrypting...");
     ssize_t result;
+    uint8_t proto = *reinterpret_cast<uint8_t *>(extra);
 
     mbedtls_cipher_reset(&_cipher);
     if (action) {
-        result = __encrypt(data, len, buflen);
+        result = __encrypt(data, len, buflen, proto);
     } else {
-        result = __decrypt(data, len, buflen);
+        result = __decrypt(data, len, buflen, proto);
     }
 
     return result;
 }
 
-ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen) {
+ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen, uint8_t p) {
     ssize_t result;
 
     if (buflen < len + padlen()) {
@@ -55,6 +56,7 @@ ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen) {
     }
 
     __generate_salt();
+    _salt.back() = p;
     __get_session_key();
 
     mbedtls_cipher_setkey(&_cipher, _skey.data(), 8 * _skey.size(), MBEDTLS_ENCRYPT);
@@ -74,7 +76,7 @@ ssize_t Crypto::__encrypt(uint8_t *data, size_t len, size_t buflen) {
     return result;
 }
 
-ssize_t Crypto::__decrypt(uint8_t *data, size_t len, size_t buflen) {
+ssize_t Crypto::__decrypt(uint8_t *data, size_t len, size_t buflen, uint8_t p) {
     ssize_t result;
     size_t cLen = len - padlen();
 
