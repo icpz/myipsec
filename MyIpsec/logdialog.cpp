@@ -9,6 +9,12 @@ LogDialog::LogDialog(QWidget *parent) :
     ui->setupUi(this);
 
     setFixedSize(size());
+    connect(ui->logView, &QTextBrowser::textChanged,
+            [this]() {
+        QTextCursor c = ui->logView->textCursor();
+        c.movePosition(QTextCursor::End);
+        ui->logView->setTextCursor(c);
+    });
 }
 
 LogDialog::~LogDialog()
@@ -48,7 +54,4 @@ void LogDialog::onFileChanged(const QString &path) {
         return;
     }
     ui->logView->append(qts->readAll());
-    QTextCursor c = ui->logView->textCursor();
-    c.movePosition(QTextCursor::End);
-    ui->logView->setTextCursor(c);
 }

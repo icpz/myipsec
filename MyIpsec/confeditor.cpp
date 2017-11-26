@@ -13,7 +13,7 @@ ConfEditor::ConfEditor(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    this->setFixedSize(this->size());
+    setFixedSize(size());
     ui->saveButton->setEnabled(false);
     fileChanged = false;
     initSignals();

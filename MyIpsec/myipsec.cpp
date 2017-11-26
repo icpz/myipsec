@@ -24,7 +24,7 @@ MyIpsec::MyIpsec(QWidget *parent) :
     started(false)
 {
     ui->setupUi(this);
-    this->setFixedSize(this->size());
+    setFixedSize(size());
     ui->startButton->setText(tr("Start"));
     ui->statusLabel->setText(tr("OFF"));
     ui->restartButton->setEnabled(false);
