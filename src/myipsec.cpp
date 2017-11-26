@@ -127,7 +127,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
             VLOG(2) << "proto matched: " << ipProto;
             pass = false;
             crypt = true;
-            ip->protocol = 51;
+            ip->protocol = FAKE_PROTO;
         }
         break;
 
@@ -136,7 +136,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         VLOG(2) << "got an incoming packet, key: " << std::hex << key.key;
         transer = filter->find(key);
         if (!transer) pass = true;
-        else if (ipProto == 51 && filter->match(key, lastByte)) {
+        else if (ipProto == FAKE_PROTO && filter->match(key, lastByte)) {
             VLOG(2) << "proto matched: " << lastByte;
             pass = false;
             crypt = false;

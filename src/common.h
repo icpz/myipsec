@@ -14,6 +14,7 @@ extern "C" {
 }
 
 #define MY_TAG_SIZE 16
+#define FAKE_PROTO 51
 
 #endif
 
