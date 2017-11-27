@@ -71,6 +71,9 @@ void MyIpsec::initSignals() {
             return;
         }
         qDebug() << "myipsec exits with code: " << code;
+        if (code) {
+            emit alert(tr("myipsec exits with code: %1").arg(code));
+        }
     });
     connect(&process, &QProcess::started, [this]() {
         started = true;

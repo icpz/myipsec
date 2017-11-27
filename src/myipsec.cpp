@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <netinet/ip.h>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <ev.h>
 #include "util.h"
@@ -15,30 +16,19 @@
 void mainLoop();
 void initFilter(const std::string &file);
 
+DEFINE_string(c, "", "path to the configuration file");
+DECLARE_int32(v);
+
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
-    std::string configFile;
-    int c;
+    google::ParseCommandLineFlags(&argc, &argv, true);
+    std::string configFile = FLAGS_c;
 
     if (getuid() != 0) {
-        LOG(ERROR) << "This program must run as root.";
+        LOG(ERROR) << "This program must be run as root.";
         return -1;
     }
 
-    while ((c = getopt(argc, argv, "c:")) != -1) {
-        switch(c) {
-            case 'c':
-                configFile = optarg;
-                break;
-
-            case '?':
-                LOG(WARNING) << "unknown option: " << (char)optopt;
-                break;
-
-            default:
-                break;
-        }
-    }
     if (configFile.empty()) {
         LOG(ERROR) << "no config file!";
         return -1;
