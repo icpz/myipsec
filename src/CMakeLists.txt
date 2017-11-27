@@ -23,11 +23,14 @@ list(APPEND SOURCES
     filter.cpp
     )
 
-# add the executable
-add_executable(myipsec ${SOURCES})
-target_link_libraries(myipsec ${DEPS})
+add_custom_target(scripts)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iptables_setup.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/iptables_setup.sh
-               COPYONLY)
+add_custom_command(TARGET scripts PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E
+                        copy ${CMAKE_CURRENT_SOURCE_DIR}/iptables_setup.sh
+                             ${CMAKE_CURRENT_BINARY_DIR}/iptables_setup.sh)
+
+add_executable(myipsec ${SOURCES})
+add_dependencies(myipsec scripts)
+target_link_libraries(myipsec ${DEPS})
 
