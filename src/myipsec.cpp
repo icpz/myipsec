@@ -97,6 +97,8 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     int datalen;
     struct pkt_buff *pkt;
     struct iphdr *ip;
+    char srcIpBuf[INET6_ADDRSTRLEN];
+    char dstIpBuf[INET6_ADDRSTRLEN];
 
 	ph = nfq_get_msg_packet_hdr(nfa);
 	id = ntohl(ph->packet_id);
@@ -107,7 +109,9 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
     ip = nfq_ip_get_hdr(pkt);
     uint16_t iphdrLen = 4 * ip->ihl;
 
-    VLOG(2) << std::hex << ip->saddr << " -> " << ip->daddr;
+    inet_ntop(AF_INET, &ip->saddr, srcIpBuf, sizeof srcIpBuf);
+    inet_ntop(AF_INET, &ip->daddr, dstIpBuf, sizeof dstIpBuf);
+    VLOG(2) << std::hex << srcIpBuf << " -> " << dstIpBuf;
     
     uint32_t verdict = NF_ACCEPT;
     PacketFilter::key_type key;
@@ -124,7 +128,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         transer = filter->find(key);
         if (!transer) pass = true;
         else if (filter->match(key, ipProto)) {
-            VLOG(2) << "proto matched: " << ipProto;
+            VLOG(2) << "proto matched: " << (uint32_t)ipProto;
             pass = false;
             crypt = true;
             ip->protocol = FAKE_PROTO;
@@ -137,7 +141,7 @@ static int queue_cb(std::shared_ptr<NFQ_queue> qh, struct nfgenmsg *nfmsg, struc
         transer = filter->find(key);
         if (!transer) pass = true;
         else if (ipProto == FAKE_PROTO && filter->match(key, lastByte)) {
-            VLOG(2) << "proto matched: " << lastByte;
+            VLOG(2) << "proto matched: " << (uint32_t)lastByte;
             pass = false;
             crypt = false;
             ip->protocol = lastByte;

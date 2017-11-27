@@ -31,7 +31,7 @@ static const uint8_t kAdditional[] = "myipsec v1.0 made by cpz & hsy";
 static const size_t kTagSize = MY_TAG_SIZE;
 
 ssize_t Crypto::transform(uint8_t action, uint8_t *data, size_t len, size_t buflen, void *extra) {
-    LOG(INFO) << (action ? "encrypting..." : "decrypting...");
+    VLOG(1) << (action ? "encrypting..." : "decrypting...");
     ssize_t result;
     uint8_t proto = *reinterpret_cast<uint8_t *>(extra);
 

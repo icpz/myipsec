@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <arpa/inet.h>
 
 extern "C" {
 #include <linux/types.h>

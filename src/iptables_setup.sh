@@ -14,7 +14,7 @@ function iptables_chain_exists() {
 
 function iptables_setup() {
     if iptables_chain_exists $MY_CHAIN raw; then
-        echo chain $MY_CHAIN already exists.
+        echo chain $MY_CHAIN in raw already exists.
         return
     fi
 
@@ -24,12 +24,26 @@ function iptables_setup() {
 
     iptables -t raw -I PREROUTING -j $MY_CHAIN
     iptables -t raw -I OUTPUT -j $MY_CHAIN
+
+    if iptables_chain_exists $MY_CHAIN filter; then
+        echo chain $MY_CHAIN in raw already exists.
+        return
+    fi
+
+    iptables -N $MY_CHAIN
+    iptables -A $MY_CHAIN -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400
+    iptables -A $MY_CHAIN -j RETURN
+    
+    iptables -I INPUT -j $MY_CHAIN
+    iptables -I OUTPUT -j $MY_CHAIN
 }
 
 function iptables_unsetup() {
     iptables-save | grep -v -- "-j $MY_CHAIN" | iptables-restore
     iptables -t raw -F $MY_CHAIN
     iptables -t raw -X $MY_CHAIN
+    iptables -F $MY_CHAIN
+    iptables -X $MY_CHAIN
 }
 
 function usage() {
