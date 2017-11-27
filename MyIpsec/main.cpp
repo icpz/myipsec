@@ -1,9 +1,13 @@
 #include "myipsec.h"
 #include <QApplication>
 #include <QString>
+#include <QLockFile>
+#include <QDir>
 #include <QMessageBox>
 #include <memory>
 #include <unistd.h>
+
+QLockFile lockFile(QDir::tempPath() + "MyIpsec.lock");
 
 int main(int argc, char *argv[])
 {
@@ -15,6 +19,14 @@ int main(int argc, char *argv[])
                              QMessageBox::Ok);
         return 0;
     }
+
+    if (!lockFile.tryLock(300)) {
+        QMessageBox::warning(nullptr, "Multi-instance detected",
+                             "You probably already have this app running",
+                             QMessageBox::Ok);
+        return 0;
+    }
+
     w.reset(new MyIpsec);
     w->show();
 
