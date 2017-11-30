@@ -65,7 +65,6 @@ void MyIpsec::initSignals() {
         ui->statusLabel->setText(tr("OFF"));
         ui->restartButton->setEnabled(false);
         ui->logButton->setEnabled(false);
-        logView->close();
         if (status == QProcess::CrashExit) {
             emit alert(tr("myipsec crashed! Please do check"));
             return;
@@ -101,7 +100,6 @@ void MyIpsec::on_startButton_clicked() {
         ui->statusLabel->setText(tr("OFF"));
         ui->restartButton->setEnabled(false);
         ui->logButton->setEnabled(false);
-        logView->close();
     } else {
         emit alert(tr("Failed to setup firewall!"), true);
     }

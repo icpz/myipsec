@@ -53,5 +53,7 @@ void LogDialog::onFileChanged(const QString &path) {
         ui->logView->setText(qts->readAll());
         return;
     }
-    ui->logView->append(qts->readAll());
+    auto view = ui->logView;
+    view->moveCursor(QTextCursor::End);
+    view->insertPlainText(qts->readAll());
 }
