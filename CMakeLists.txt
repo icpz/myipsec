@@ -1,8 +1,11 @@
-cmake_minimum_required (VERSION 3.6)
-project (MyIpsec)
+cmake_minimum_required(VERSION 3.2)
+project(MyIpsec)
+
+set(CMAKE_CXX_STANDARD 14)
+
 # The version number.
-set (MYIPSEC_VERSION_MAJOR 1)
-set (MYIPSEC_VERSION_MINOR 0)
+set(MYIPSEC_VERSION_MAJOR 1)
+set(MYIPSEC_VERSION_MINOR 0)
 
 add_subdirectory(src build/bin)
 add_subdirectory(MyIpsec build)
