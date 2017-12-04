@@ -22,7 +22,7 @@
 安装依赖
 
 ```bash
-sudo apt install build-essentials git libev-dev libnetfilter-queue-dev cmake qt5-default pkg-config libmbedtls-dev libgoogle-glog-dev
+sudo apt install build-essential git libev-dev libnetfilter-queue-dev cmake qt5-default pkg-config libmbedtls-dev libgoogle-glog-dev
 ```
 
 克隆代码并编译
