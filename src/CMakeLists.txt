@@ -1,6 +1,7 @@
 
 find_package(PkgConfig REQUIRED)
 
+find_library(LIBPTHREAD pthread)
 find_library(LIBGFLAGS gflags)
 find_library(LIBEV ev)
 find_library(LIBGLOG glog)
@@ -9,6 +10,7 @@ find_library(LIBMBEDCRYPT mbedcrypto)
 pkg_search_module(LIBNFQUEUE REQUIRED libnetfilter_queue)
 
 list(APPEND DEPS
+    ${LIBPTHREAD}
     ${LIBGFLAGS}
     ${LIBEV}
     ${LIBGLOG}
