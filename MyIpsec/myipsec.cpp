@@ -180,6 +180,5 @@ bool MyIpsec::stopFirewall() {
         qDebug() << "exit timeout, killing";
         process.kill();
     }
-    QProcess::execute(QString("%1 reset").arg(scriptPath));
     return true;
 }
