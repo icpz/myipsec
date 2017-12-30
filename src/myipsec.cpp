@@ -51,6 +51,10 @@ void initFilter(const std::string &file) {
     }
 }
 
+// mock or unmock the ip.protocol
+// for system would check the TCP packet before enter the nfhook
+// when inv == false, change the proto to 50 + proto
+// otherwise          recover the proto
 void fixProtocol(uint8_t &proto, bool inv) {
     if (inv) {
         switch (proto) {
