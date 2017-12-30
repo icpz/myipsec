@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1.10)
 project(MyIpsec)
 
-find_package(Qt5Widgets)
+find_package(Qt5Widgets REQUIRED)
 
 list(APPEND LIB_SRC
         confeditor.cpp
@@ -10,24 +10,15 @@ list(APPEND LIB_SRC
         main.cpp
     )
 
-list(APPEND LIB_HDR
-        confeditor.h
-        logdialog.h
-        myipsec.h
-    )
-
-list(APPEND LIB_UI
-        confeditor.ui
-        logdialog.ui
-        myipsec.ui
-    )
-
-qt5_wrap_cpp(LIB_hdr_moc ${LIB_HDR})
-qt5_wrap_ui(LIB_ui_moc ${LIB_UI})
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
 
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
+include_directories(${Qt5Widgets_INCLUDE_DIRS})
 
-add_executable(MyIpsec ${LIB_SRC} ${LIB_hdr_moc} ${LIB_ui_moc})
+add_executable(MyIpsec ${LIB_SRC})
 target_link_libraries(MyIpsec Qt5::Widgets)
 
