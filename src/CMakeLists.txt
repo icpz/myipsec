@@ -1,11 +1,20 @@
 
 find_package(PkgConfig REQUIRED)
 
-find_library(LIBPTHREAD pthread)
-find_library(LIBGFLAGS gflags)
-find_library(LIBEV ev)
-find_library(LIBGLOG glog)
-find_library(LIBMBEDCRYPT mbedcrypto)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+if(BUILD_WITH_STATIC)
+    find_library(LIBGFLAGS libgflags.a)
+    find_library(LIBEV libev.a)
+    find_library(LIBGLOG libglog.a)
+    find_library(LIBMBEDCRYPT libmbedcrypto.a)
+else(BUILD_WITH_STATIC)
+    find_library(LIBGFLAGS gflags)
+    find_library(LIBEV ev)
+    find_library(LIBGLOG glog)
+    find_library(LIBMBEDCRYPT mbedcrypto)
+endif(BUILD_WITH_STATIC)
 
 pkg_search_module(LIBNFQUEUE REQUIRED libnetfilter_queue)
 
@@ -36,5 +45,5 @@ add_custom_command(TARGET scripts PRE_BUILD
 
 add_executable(myipsec ${SOURCES})
 add_dependencies(myipsec scripts)
-target_link_libraries(myipsec ${DEPS})
+target_link_libraries(myipsec ${DEPS} Threads::Threads)
 
